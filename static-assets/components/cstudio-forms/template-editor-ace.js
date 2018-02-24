@@ -2,9 +2,14 @@ CStudioAuthoring.Module.requireModule(
     'ace',
     '/static-assets/components/cstudio-common/ace/ace.js', {}, {
         moduleLoaded: function () {
-            CStudioAuthoring.Utils.addJavascript("/static-assets/components/cstudio-common/ace/ext-searchbox.js");
+            CStudioAuthoring.Utils.addJavascript("/static-assets/components/cstudio-common/ace/ext-emmet.js");
+            CStudioAuthoring.Utils.addJavascript("/static-assets/components/cstudio-common/ace/worker-xml.js");
             CStudioAuthoring.Utils.addJavascript("/static-assets/components/cstudio-common/ace/ext-language_tools.js");
-            CStudioAuthoring.Utils.addCss("/static-assets/themes/cstudioTheme/css/template-editor.css")
+            CStudioAuthoring.Utils.addJavascript("/static-assets/components/cstudio-common/ace/worker-javascript.js");
+            CStudioAuthoring.Utils.addJavascript("/static-assets/components/cstudio-common/ace/worker-html.js");
+            CStudioAuthoring.Utils.addJavascript("/static-assets/components/cstudio-common/ace/worker-css.js");
+            CStudioAuthoring.Utils.addJavascript("/static-assets/components/cstudio-common/ace/worker-xml.js");
+            CStudioAuthoring.Utils.addCss("/static-assets/themes/cstudioTheme/css/template-editor.css");
             CStudioAuthoring.Module.requireModule(
                 "cstudio-forms-engine",
                 '/static-assets/components/cstudio-forms/forms-engine.js',
@@ -81,12 +86,10 @@ CStudioAuthoring.Module.requireModule(
                                         editorContainerEl.appendChild(editorEl);
                                         //End of Build Element
                                         var editor = ace.edit("editor");
-                                        editor.setTheme("ace/theme/sqlserver");
                                         var mode = "ace/mode/";
                                         if(templatePath.indexOf(".css") != -1) {
                                             mode += "css";
-                                        }
-                                        else if(templatePath.indexOf(".js") != -1) {
+                                        }else if(templatePath.indexOf(".js") != -1) {
                                             mode += "javascript";
                                         }else if(templatePath.indexOf(".groovy") != -1){
                                             mode += "groovy"
@@ -102,16 +105,23 @@ CStudioAuthoring.Module.requireModule(
                                         }else{
                                             mode += "ftl"
                                         }
-                                        editor.session.setMode(mode);
-
                                         editor.setOptions({
                                             enableBasicAutocompletion: true,
                                             enableSnippets: true,
-                                            enableLiveAutocompletion: false
+                                            enableLiveAutocompletion: false,
+                                            highlightActiveLine:true,
+                                            hScrollBarAlwaysVisible:false,
+                                            vScrollBarAlwaysVisible:true,
+                                            animatedScroll:true,
+                                            printMarginColumn:120,
+                                            readOnly:!isWrite,
+                                            mode:mode,
+                                            theme:"ace/theme/sqlserver",
+                                            enableEmmet:true
                                         });
-                                        editor.setReadOnly(!isWrite);
-                                        editor.setValue(content, 1);// 1 cursor at the start
-                                        editor.focus();
+
+                                        editor.setValue(content, -1);// -1 for do not select anything
+
                                         var codeEditorEl = YAHOO.util.Dom.getElementsByClassName("ace_editor", null, editorContainerEl)[0];
                                         codeEditorEl.style.backgroundColor = "white";
 
@@ -148,7 +158,7 @@ CStudioAuthoring.Module.requireModule(
                                         //End of Cancel BTN
                                     },
                                     failure: function() {
-                                        console.log("Nop :(")
+                                        console.log("Nope :(")
                                     }
                                 }// End of Permissions Callback
 
