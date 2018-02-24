@@ -2412,7 +2412,7 @@ var nodeOpen = false,
                 }
 
                 CStudioAuthoring.Module.requireModule("cstudio-forms-template-editor",
-                    "/static-assets/components/cstudio-forms/template-editor.js",
+                    "/static-assets/components/cstudio-forms/template-editor-ace.js",
                     { displayTemplate: displayTemplate, channel: channel, cb: templateSaveCb},
                     loadTemplateEditorCb, contentType, mode);
 
