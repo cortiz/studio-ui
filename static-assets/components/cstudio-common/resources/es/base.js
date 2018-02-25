@@ -307,6 +307,7 @@ CStudioAuthoring.Messages.registerBundle("forms", "es", {
     saveAndCloseDraft: "Guardar como Borrador",
     saveAndPreview: "Guardar y Mostrar",
     save: "Guardar",
+    saved: "Guardado",
     cancel: "Cancelar",
     close: "Cerrar",
     repeatAddAnother: "Agregar Otro",

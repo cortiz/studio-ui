@@ -310,6 +310,7 @@ CStudioAuthoring.Messages.registerBundle("forms", "en", {
     saveAndCloseDraft: "Save Draft",
     saveAndPreview: "Save and Preview",
     save: "Save",
+    saved: "Saved",
     cancel: "Cancel",
     close: "Close",
     repeatAddAnother: "Add Another",

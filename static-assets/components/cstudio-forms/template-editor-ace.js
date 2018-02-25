@@ -2,13 +2,8 @@ CStudioAuthoring.Module.requireModule(
     'ace',
     '/static-assets/components/cstudio-common/ace/ace.js', {}, {
         moduleLoaded: function () {
-            CStudioAuthoring.Utils.addJavascript("/static-assets/components/cstudio-common/ace/ext-emmet.js");
-            CStudioAuthoring.Utils.addJavascript("/static-assets/components/cstudio-common/ace/worker-xml.js");
+            CStudioAuthoring.Utils.addJavascript("/static-assets/components/cstudio-common/ace/ext-statusbar.js");
             CStudioAuthoring.Utils.addJavascript("/static-assets/components/cstudio-common/ace/ext-language_tools.js");
-            CStudioAuthoring.Utils.addJavascript("/static-assets/components/cstudio-common/ace/worker-javascript.js");
-            CStudioAuthoring.Utils.addJavascript("/static-assets/components/cstudio-common/ace/worker-html.js");
-            CStudioAuthoring.Utils.addJavascript("/static-assets/components/cstudio-common/ace/worker-css.js");
-            CStudioAuthoring.Utils.addJavascript("/static-assets/components/cstudio-common/ace/worker-xml.js");
             CStudioAuthoring.Utils.addCss("/static-assets/themes/cstudioTheme/css/template-editor.css");
             CStudioAuthoring.Module.requireModule(
                 "cstudio-forms-engine",
@@ -21,6 +16,7 @@ CStudioAuthoring.Module.requireModule(
                         };
                         var CrafterUIMessages = CStudioAuthoring.Messages;
                         var contextNavLangBundle = CMgs.getBundle("contextnav", CStudioAuthoringContext.lang);
+                        var formLangBundle = CMgs.getBundle("forms", CStudioAuthoringContext.lang);
                         CStudioForms.TemplateEditor.prototype = {
                             render: function(templatePath, channel, onSaveCb, contentType, mode) {
 
@@ -64,6 +60,8 @@ CStudioAuthoring.Module.requireModule(
 
                                         if(isWrite == true) {
                                             formHTML +=
+                                                "<div id='template-statusbar-toolbar'><div" +
+                                                " id='template-editor-status-variable'></div></div>" +
                                                 "<div class='edit-buttons-container'>" +
                                                 "<div  id='template-editor-update-button' class='btn btn-primary cstudio-template-editor-button'>Update</div>" +
                                                 "<div  id='template-editor-cancel-button' class='btn btn-default cstudio-template-editor-button'>Cancel</div>" +
@@ -116,11 +114,14 @@ CStudioAuthoring.Module.requireModule(
                                             printMarginColumn:120,
                                             readOnly:!isWrite,
                                             mode:mode,
-                                            theme:"ace/theme/sqlserver",
-                                            enableEmmet:true
+                                            theme:"ace/theme/sqlserver"
                                         });
 
                                         editor.setValue(content, -1);// -1 for do not select anything
+
+                                        var StatusBar = ace.require("ace/ext/statusbar").StatusBar;
+                                        // create a simple selection status indicator
+                                        var statusBar = new StatusBar(editor, document.getElementById("template-editor-toolbar"));
 
                                         var codeEditorEl = YAHOO.util.Dom.getElementsByClassName("ace_editor", null, editorContainerEl)[0];
                                         codeEditorEl.style.backgroundColor = "white";
@@ -156,6 +157,89 @@ CStudioAuthoring.Module.requireModule(
                                             YAHOO.util.Connect.asyncRequest('GET', CStudioAuthoring.Service.createServiceUri(cancelEditServiceUrl), cancelEditCb);
                                         };
                                         //End of Cancel BTN
+
+                                        // Save Btn
+                                        if(isWrite) {
+                                            var saveSvcCb = {
+                                                success: function() {
+                                                    modalEl.parentNode.removeChild(modalEl);
+                                                    onSaveCb.success();
+                                                },
+                                                failure: function() {
+                                                    console.log("Unable to save");
+                                                }
+                                            };
+                                            var saveEl = document.getElementById('template-editor-update-button');
+                                            saveEl.onclick = function() {
+                                                saveEl.disable = true // should prevent happy mouse save.
+                                                var value = editor.getValue();
+                                                var path = templatePath.substring(0, templatePath.lastIndexOf("/"));
+                                                var filename = templatePath.substring(templatePath.lastIndexOf("/")+1);
+
+                                                var writeServiceUrl = "/api/1/services/api/1/content/write-content.json" +
+                                                    "?site=" + CStudioAuthoringContext.site +
+                                                    "&phase=onSave" +
+                                                    "&path=" + path +
+                                                    "&fileName=" + encodeURI(filename) +
+                                                    "&user=" + CStudioAuthoringContext.user +
+                                                    "&unlock=true";
+
+                                                YAHOO.util.Connect.setDefaultPostHeader(false);
+                                                YAHOO.util.Connect.initHeader("Content-Type", "text/pain; charset=utf-8");
+                                                YAHOO.util.Connect.initHeader(CStudioAuthoringContext.xsrfHeaderName, CStudioAuthoringContext.xsrfToken);
+                                                YAHOO.util.Connect.asyncRequest('POST', CStudioAuthoring.Service.createServiceUri(writeServiceUrl), saveSvcCb, value);
+
+                                            };
+                                        }
+                                        //end Save
+
+                                        // Keybinding
+                                        editor.commands.addCommand({
+                                            name: 'saveFile',
+                                            bindKey: {
+                                                win: 'Ctrl-S',
+                                                mac: 'Command-S',
+                                                sender: 'editor|cli'
+                                            },
+                                            exec: function(env, args, request) {
+                                               // Copy-Pasta
+                                                var value = editor.getValue();
+                                                var path = templatePath.substring(0, templatePath.lastIndexOf("/"));
+                                                var filename = templatePath.substring(templatePath.lastIndexOf("/")+1);
+
+                                                var writeServiceUrl = "/api/1/services/api/1/content/write-content.json" +
+                                                    "?site=" + CStudioAuthoringContext.site +
+                                                    "&phase=onSave" +
+                                                    "&path=" + path +
+                                                    "&fileName=" + encodeURI(filename) +
+                                                    "&user=" + CStudioAuthoringContext.user +
+                                                    "&unlock=false";//Keep it open
+
+                                                YAHOO.util.Connect.setDefaultPostHeader(false);
+                                                YAHOO.util.Connect.initHeader("Content-Type", "text/pain; charset=utf-8");
+                                                YAHOO.util.Connect.initHeader(CStudioAuthoringContext.xsrfHeaderName, CStudioAuthoringContext.xsrfToken);
+                                                YAHOO.util.Connect.asyncRequest('POST', CStudioAuthoring.Service.createServiceUri(writeServiceUrl), {
+                                                    success: function() {
+                                                       CMgs.format(formLangBundle, "saved")
+                                                    },
+                                                    failure: function() {
+                                                        CStudioAuthoring.Operations.showSimpleDialog(
+                                                            "errorDialog-dialog",
+                                                            CStudioAuthoring.Operations.simpleDialogTypeINFO,
+                                                            CMgs.format(langBundle, "notification"),
+                                                            CMgs.format(formLangBundle, "errSaveFailed"),
+                                                            null, // use default button
+                                                            YAHOO.widget.SimpleDialog.ICON_BLOCK,
+                                                            "studioDialog"
+                                                        );
+                                                    }
+                                                }, value);
+
+                                                //end Copy-Pasta
+                                            }
+                                        });
+
+                                        // end Keybinding
                                     },
                                     failure: function() {
                                         console.log("Nope :(")

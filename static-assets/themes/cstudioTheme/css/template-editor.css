@@ -31,6 +31,17 @@
   border-bottom: 1px solid #e7e7e7;
 }
 
+#template-statusbar-toolbar{
+    height: 31px;
+    background: #f8f8f8;
+    border-bottom: 1px solid #e7e7e7;
+}
+
+
+#template-editor-status-variable{
+    padding: 2px 0 0 45px;
+}
+
 #template-editor-toolbar-variable{
   padding: 2px 0 0 45px;
 }
